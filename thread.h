@@ -14,6 +14,7 @@ class Thread : public QObject
   unsigned char* Blocks;
   int Width;
   int Height;
+  int Depth;
   int Square;
   int Size;
 

@@ -30,77 +30,83 @@ void Thread::thread()
   int x, y, z;
   int px, pz;
   int t1, t2;
+  QRgb t,s,f;
+  QString fx, fz, fux, fuz;
 
     //Load up my image
-  qDebug("Loading: %s\n", Image_Filename.toAscii().data() );
-  QImage image( Image_Filename );
+  QImage front( "Front_50.png" );
+  QImage side( "Side_50.png" );
+  QImage top( "Top_50.png" );
 
     //Get my basic world info
-  Width = image.width();
-  Height = image.height();
-  Square = Width * Height;
-  Size = Square * 64;
-
-    //Error if the image size is invalid
-  if ( (Width % 16) != 0 || (Height % 16) != 0 )
-  {
-    qDebug("Invalid image size, must be divisiable by 16!\n");
-    QCoreApplication::exit(0);
-    return;
-  }
+  Width = front.width();
+  Height = side.height();
+  Depth = top.width();
+  Square = Width * Depth;
+  Size = Square * Height;
 
     //Alloc my world
   qDebug("Alloc World: %d\n", Size );
-  Data = new unsigned char[ Size ];
-  Blocks = new unsigned char[ Size * 2 ];
+  Blocks = new unsigned char[ Size ];
 
     //Zero all the memory
-  memset( Data, 0, Size );
-  memset( Blocks, 0, Size * 2 );
+  memset( Blocks, 0, Size );
 
-    //Lay down a floor
-  qDebug("Laying down floor\n" );
-  for ( z = 0; z < Height; z++ )
-    for ( x = 0; x < Width; x++ )
-          Blocks[ xyz(x, 1, z)] = 7;
+    //Reading in Image
+  qDebug("Reading in Image\n" );
+  for ( y = 0; y < Height; y++ )
+    for ( z = 0; z < Depth; z++ )
+      for ( x = 0; x < Width; x++ )
+      {
+        t = top.pixel( z, x );
+        s = side.pixel( z, y );
+        f = front.pixel( x, y );
+
+          //If this is inside each image, we have a winner!
+        if (t != rgb( 0xFF, 0x0, 0xFF ) &&
+            s != rgb( 0xFF, 0x0, 0xFF ) &&
+            f != rgb( 0xFF, 0x0, 0xFF ) )
+          Blocks[ xyz( x, y, z )] = 0x04;
+      }
 
     //Create my level file
   qDebug("Building Level object\n" );
   MinecraftObject level;
   level.storeName( QString("") );
-  level.insert( QString("Time"), McVariable((qlonglong)0) );
-  level.insert( QString("LastPlayed"), McVariable((qlonglong)0) );
-  level.insert( QString("Player"), McVariable(McHash<McVariable>()) );
-  level["Player"].insert( QString("Motion"), McVariable(McList<McVariable>()));
-    level["Player"]["Motion"].toList().setType( McVariable::TAG_DOUBLE );
-    level["Player"]["Motion"].push( (double)0 );
-    level["Player"]["Motion"].push( (double)0 );
-    level["Player"]["Motion"].push( (double)0 );
-  level["Player"].insert( QString("OnGround"),  McVariable((char)0x01));
-  level["Player"].insert( QString("HurtTime"),  McVariable((short)0));
-  level["Player"].insert( QString("Health"),    McVariable((short)20));
-  level["Player"].insert( QString("Dimension"), McVariable((int)0));
-  level["Player"].insert( QString("Air"),       McVariable((short)300));
-  level["Player"].insert(QString("Inventory"),McVariable(McList<McVariable>()));
-  level["Player"].insert(QString("Pos"),McVariable(McList<McVariable>()));
-    level["Player"]["Pos"].toList().setType( McVariable::TAG_DOUBLE );
-    level["Player"]["Pos"].push( (double)0 );
-    level["Player"]["Pos"].push( (double)2.5 );
-    level["Player"]["Pos"].push( (double)0 );
-  level["Player"].insert( QString("AttackTime"),McVariable((short)0));
-  level["Player"].insert( QString("Fire"), McVariable((short)-20));
-  level["Player"].insert( QString("FallDistance"), McVariable((float)0));
-  level["Player"].insert(QString("Rotation"),McVariable(McList<McVariable>()));
-    level["Player"]["Rotation"].toList().setType( McVariable::TAG_FLOAT );
-    level["Player"]["Rotation"].push( (float)0 );
-    level["Player"]["Rotation"].push( (float)0 );
-  level["Player"].insert( QString("Score"),     McVariable((int)0));
-  level["Player"].insert( QString("DeathTime"), McVariable((short)0));
-  level.insert( QString("SpawnX"), McVariable((int)0) );
-  level.insert( QString("SpawnY"), McVariable((int)2) );
-  level.insert( QString("SpawnZ"), McVariable((int)0) );
-  level.insert( QString("SizeOnDisk"), McVariable((qlonglong)91700) );
-  level.insert( QString("RandomSeed"), McVariable((qlonglong)0x917) );
+  level.insert( QString("Data"), McVariable(McHash<McVariable>()) );
+  level["Data"].insert( QString("Time"), McVariable((qlonglong)0) );
+  level["Data"].insert( QString("LastPlayed"), McVariable((qlonglong)1106379604) );
+  level["Data"].insert( QString("Player"), McVariable(McHash<McVariable>()) );
+  level["Data"]["Player"].insert( QString("Motion"), McVariable(McList<McVariable>()));
+    level["Data"]["Player"]["Motion"].toList().setType( McVariable::TAG_DOUBLE );
+    level["Data"]["Player"]["Motion"].push( (double)0 );
+    level["Data"]["Player"]["Motion"].push( (double)-.078 );
+    level["Data"]["Player"]["Motion"].push( (double)0 );
+  level["Data"]["Player"].insert( QString("OnGround"),  McVariable((char)0x01));
+  level["Data"]["Player"].insert( QString("HurtTime"),  McVariable((short)0));
+  level["Data"]["Player"].insert( QString("Health"),    McVariable((short)20));
+  level["Data"]["Player"].insert( QString("Dimension"), McVariable((int)0));
+  level["Data"]["Player"].insert( QString("Air"),       McVariable((short)300));
+  level["Data"]["Player"].insert(QString("Inventory"),McVariable(McList<McVariable>()));
+  level["Data"]["Player"].insert(QString("Pos"),McVariable(McList<McVariable>()));
+    level["Data"]["Player"]["Pos"].toList().setType( McVariable::TAG_DOUBLE );
+    level["Data"]["Player"]["Pos"].push( (double)1 );
+    level["Data"]["Player"]["Pos"].push( (double)4.5 );
+    level["Data"]["Player"]["Pos"].push( (double)1 );
+  level["Data"]["Player"].insert( QString("AttackTime"),McVariable((short)0));
+  level["Data"]["Player"].insert( QString("Fire"), McVariable((short)-20));
+  level["Data"]["Player"].insert( QString("FallDistance"), McVariable((float)0));
+  level["Data"]["Player"].insert(QString("Rotation"),McVariable(McList<McVariable>()));
+    level["Data"]["Player"]["Rotation"].toList().setType( McVariable::TAG_FLOAT );
+    level["Data"]["Player"]["Rotation"].push( (float)-433.350037 );
+    level["Data"]["Player"]["Rotation"].push( (float)10.650003 );
+  level["Data"]["Player"].insert( QString("Score"),     McVariable((int)0));
+  level["Data"]["Player"].insert( QString("DeathTime"), McVariable((short)0));
+  level["Data"].insert( QString("SpawnX"), McVariable((int)1) );
+  level["Data"].insert( QString("SpawnY"), McVariable((int)3) );
+  level["Data"].insert( QString("SpawnZ"), McVariable((int)1) );
+  level["Data"].insert( QString("SizeOnDisk"), McVariable((qlonglong)91700) );
+  level["Data"].insert( QString("RandomSeed"), McVariable((qlonglong)0x917) );
 
     //Build a map object
   MinecraftObject map;
@@ -119,60 +125,6 @@ void Thread::thread()
   map["Level"].insert( QString("HeightMap"), McVariable(QByteArray()));
   map["Level"].insert( QString("BlockLight"), McVariable(QByteArray()));
   map["Level"].insert( QString("Blocks"), McVariable(QByteArray()));
-
-    //Reading in Image
-  qDebug("Reading in Image\n" );
-  for ( z = 0; z < Height; z++ )
-    for ( x = 0; x < Width; x++ )
-      switch ( image.pixel( x, z ) )
-      {
-        case rgb( 0x91, 0x77, 0x29 ): //Starting point
-          level["Player"]["SpawnX"] = (int)x;
-          level["Player"]["SpawnZ"] = (int)z;
-          level["Player"]["Pos"][0] = (double)x;
-          level["Player"]["Pos"][2] = (double)z;
-          break;
-
-          //Block
-        case rgb( 0, 0, 0 ): 
-          Blocks[ xyz(x,2,z)] = 0x04;
-          break;
-
-          //Block
-        case rgb( 0, 0, 0x7f ): 
-          Blocks[ xyz(x,3,z)] = 0x04;
-          break;
-
-          //Block
-        case rgb( 0, 0, 0xff ): 
-          Blocks[ xyz(x,4,z)] = 0x04;
-          break;
-
-          //Redstone
-        case rgb( 0xFF, 0, 0 ): 
-          Blocks[ xyz(x,2,z)] = 0x37; 
-          break;
-
-          //Redstone on a block
-        case rgb( 0xFF, 0, 0x7f ): 
-          Blocks[ xyz(x,3,z)] = 0x37; 
-          Blocks[ xyz(x,2,z)] = 0x04; 
-          break;
-
-          //Redstone on a block
-        case rgb( 0xFF, 0, 0xff ): 
-          Blocks[ xyz(x,4,z)] = 0x37; 
-          Blocks[ xyz(x,3,z)] = 0x04; 
-          break;
-
-          //Torch
-        case rgb( 0, 0xff, 0 ): 
-          Blocks[ xyz(x,2,z)] = 0x4c;
-          break;
-
-
-        default: break;
-      }
 
     //Now that we've read all my data in, write the map out
   qDebug("Writing Level\n" );
@@ -193,15 +145,29 @@ void Thread::thread()
   pclose( handle );
 
     //Write out the maps
-  for ( pz = 0; pz < Height / 16; pz++ )
-    for ( px = 0; px < Width / 16; px++ )
+  for ( pz = -6; pz < Depth / 16 + 7; pz++ )
+    for ( px = -6; px < Width / 16 + 7; px++ )
     {
-      QString fx = QString::number( px, 36 );
-      QString fz = QString::number( pz, 36 );
-      //QString fux = QString::number( (*(unsigned int*)(char*)&px) % 64, 36 );
-      //QString fuz = QString::number( (*(unsigned int*)(char*)&pz) % 64, 36 );
-      QString fux = QString::number( px % 64, 36 );
-      QString fuz = QString::number( pz % 64, 36 );
+      if ( px >= 0 )
+      {
+        fx = QString::number( px, 36 );
+        fux = QString::number( px & 0x1F, 36 );
+      }
+      else
+      {
+        fx = QString("-%1").arg(QString::number( -px, 36 ));
+        fux = QString::number( (((~(-px)) & 0xFF) + 1) & 0x3F, 36);
+      }
+      if ( pz >= 0 )
+      {
+        fz = QString::number( pz, 36 );
+        fuz = QString::number( pz & 0x1F, 36 );
+      }
+      else
+      {
+        fz = QString("-%1").arg(QString::number( -pz, 36 ));
+        fuz = QString::number( (((~(-pz)) & 0xFF) + 1) & 0x3F, 36);
+      }
       QString filename = QString("%1/%2/%3/c.%4.%5.dat").
         arg(Dir).arg(fux).arg(fuz).arg(fx).arg(fz);
 
@@ -226,37 +192,38 @@ void Thread::thread()
       bSkyLight.resize( 16 * 16 * 64 );
       bHeightMap.resize( 16 * 16 );
       bBlockLight.resize( 16 * 16 * 64 );
-      bBlocks.resize( 16 * 16 * 64 * 2);
+      bBlocks.resize( 16 * 16 * 128);
 
         //Fill some lighting stuff
-      bSkyLight.fill(0xFF);
-      bBlockLight.fill(0xFF);
+      bSkyLight.fill(0xff);
+      bBlockLight.fill(0xff);
+      bData.fill(0xFF);
+      bHeightMap.fill(1);
+      bBlocks.fill(0);
 
         //Load my object with data
-      for ( y = 0; y < 128; y++ )
+      for ( y = 0; y < Height; y++ )
         for ( z = 0; z < 16; z++ )
           for ( x = 0; x < 16; x++ )
           {
-            t1 = mxyz( x, y, z );
+              //get my t's
+            t1 = mxyz( x, (Height - y) + 5, z );
             t2 = xyz( (x + px * 16), y, (z + pz * 16) );
 
-///Buidl a dome
-            double dist = 
-              ((x + px * 16) - 200) *
-              ((x + px * 16) - 200) +
-              ((z + pz * 16) - 200) *
-              ((z + pz * 16) - 200) +
-              y * y;
-
-            if ( dist >= 12700 && dist <= 12996 )
-              bBlocks[t1] = 0x14;
-            else if ( dist > 12996 && y <= 50 )
-              bBlocks[t1] = 0x08;
-            else
-//End build dome
-                //Store my info
+              //Store an image
+            if ( px >= 0 && pz >= 0 && 
+                  x + px * 16 < Width && z + pz * 16 < Depth && y < Height )
+            {
               bBlocks[t1] = Blocks[t2];
+              if ( (int)bHeightMap[x + z * 16] < (127 - y) )
+                bHeightMap[x + z * 16] = (127 - y);
+            }
           }
+
+        //Lay down a floor
+      for ( z = 0; z < 16; z++ )
+        for ( x = 0; x < 16; x++ )
+          bBlocks[ mxyz( x, 0, z ) ] = 0x07;
 
         //Set the position
       map["Level"]["xPos"] = px;

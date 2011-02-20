@@ -29,10 +29,10 @@ int main( int argc, char** argv )
   QCoreApplication* app = new QCoreApplication(argc, argv);
 
     //Quit if we suck
-  if ( argc != 3 )
-    return printf("Usage: %s IMAGE OUTPUT_DIR\n", argv[0] );
+  if ( argc != 2 )
+    return printf("Usage: %s OUTPUT_DIR\n", argv[0] );
 
-  Thread thread ( argv[1], argv[2] );
+  Thread thread ( argv[1], argv[1] );
   thread.startThread();
 
   return app->exec();
