@@ -32,15 +32,9 @@ void Thread::startThread()
 void Thread::thread()
 {
   int x, y, z, yt;
-//  double dx, dy, dz;
   int px, pz;
   int t1, t2, t3;
-//  double dist;
-//  double min_dist;
-//  QRgb t,s,f;
   QString fx, fz, fux, fuz;
-//  int block;
-//  int data;
   int i;
   bool done;
 
@@ -86,86 +80,6 @@ void Thread::thread()
       done = (done & block_comp[i]->isFinished());
 
   } while ( !done );
-
-/*
-    //Reading in Image
-  qDebug("Reading in Image\n" );
-  for ( y = 0; y < Height; y++ )
-  {
-    qDebug("Calc %d/%d\n", y, Height );
-    for ( z = 0; z < Depth; z++ )
-      for ( x = 0; x < Width; x++ )
-      {
-        t = (top.pixel( z, x )   | 0xFF000000);
-        s = (side.pixel( z, y )  | 0xFF000000);
-        f = (front.pixel( x, y ) | 0xFF000000);
-
-          //Try to calculate what color best fits the bsg
-        min_dist = 1;
-        block = data = 0;
-
-          //Get my xyz
-        calcPoint( dx, dy, dz, t, s, f );
-
-        //Figure out waht color is closets
-
-          //White space
-        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb( 255, 0, 255 )) ) )
-        {
-          min_dist = dist;
-          block = 0;
-          data = 0;
-        }
-
-          //Gray
-        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0xB0, 0xB0, 0xB0))))
-        {
-          min_dist = dist;
-          block = 0x23;
-          data = 0x01;
-        }
-          //Dark Gray
-        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0x44, 0x44, 0x44))))
-        {
-          min_dist = dist;
-          block = 0x23;
-          data = 0x02;
-        }
-          //Black
-        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0x00, 0x00, 0x00))))
-        {
-          min_dist = dist;
-          block = 0x23;
-          data = 0x03;
-        }
-          //Red
-        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0xCC, 0x00, 0x00))))
-        {
-          min_dist = dist;
-          block = 0x23;
-          data = 0x04;
-        }
-          //Orange
-        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0xFF, 0x7F, 0x00))))
-        {
-          min_dist = dist;
-          block = 0x23;
-          data = 0x05;
-        }
-          //Yellow
-        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0xFF, 0xFF, 0x00))))
-        {
-          min_dist = dist;
-          block = 0x23;
-          data = 0x06;
-        }
-
-
-        Blocks[ xyz( x, y, z )] = block;
-        Data[ xyz( x, y, z )] = data;
-      }
-  }
-*/
 
     //Create my level file
   qDebug("Building Level object\n" );
@@ -246,6 +160,7 @@ void Thread::thread()
   for ( pz = -6; pz < Depth / 16 + 7; pz++ )
     for ( px = -6; px < Width / 16 + 7; px++ )
     {
+        //Naming schema for the filesystem inside minecraft/saves
       if ( px >= 0 )
       {
         fx = QString::number( px, 36 );
@@ -269,7 +184,7 @@ void Thread::thread()
       QString filename = QString("%1/%2/%3/c.%4.%5.dat").
         arg(Dir).arg(fux).arg(fuz).arg(fx).arg(fz);
 
-        //Make my directors
+        //Make my directories
       int ret;
       ret = system(QString("mkdir %1/%2 2> /dev/null").arg(Dir).arg(fux).toAscii().data());
       ret = system(QString("mkdir %1/%2/%3 2> /dev/null").arg(Dir).arg(fux).arg(fuz).toAscii().data());
@@ -292,7 +207,7 @@ void Thread::thread()
       bBlockLight.resize( 16 * 16 * 64 );
       bBlocks.resize( 16 * 16 * 128);
 
-        //Fill some lighting stuff
+        //Fill my arrays, turn all lighting to max
       bSkyLight.fill(0xff);
       bBlockLight.fill(0xff);
       bData.fill(0);
@@ -310,7 +225,7 @@ void Thread::thread()
             t2 = xyz( (x + px * 16), y, (z + pz * 16) );
             t3 = dxyz( x, (yt / 2), z );
 
-              //Store an image
+              //Pull data from my coordinate system, and store it into minecraft
             if ( px >= 0 && pz >= 0 && 
                   x + px * 16 < Width && z + pz * 16 < Depth && y < Height )
             {
@@ -324,11 +239,11 @@ void Thread::thread()
         for ( x = 0; x < 16; x++ )
           bBlocks[ mxyz( x, 0, z ) ] = 0x07;
 
-        //Set the position
+        //Set the position of this block in minecraft filesystem coordinates
       map["Level"]["xPos"] = px;
       map["Level"]["zPos"] = pz;
 
-        //Store my data
+        //Store my data to a map object
       map["Level"]["Data"] = bData;
       map["Level"]["SkyLight"] = bSkyLight;
       map["Level"]["HeightMap"] = bHeightMap;

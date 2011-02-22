@@ -1,0 +1,56 @@
+Hey there.
+
+This program takes 3, 2D images that are shots of the same object on each axis, XYZ and maps them into a 3D object in minecraft.
+
+You'll need QT 4.6+ downloaded and installed.
+
+To compile the code, run the following:
+
+qmake
+make
+./map_bsg OUTPUT_FOLDER
+
+Once the output folder is created, make a symbolic linc to that folder so minecraft can see it:
+
+ln -s /PATH/map_bsg/OUTPUT_FOLDER ~/.minecraft/save/World5
+
+Finally, Copy a session.lock from a working minecraft world
+
+cp ~/.minecraft/save/World1/session.lock ~/.minecraft/save/World5/
+
+
+Thats it.  You can now start minecraft, click on World5 and check out your creation.
+
+For those that want to edit the file.
+
+The core of the code exists in:
+mc_variable.h/cpp
+mc_hash.h/cpp
+mc_list.h/cpp
+file_parser.h/cpp
+minecraft_byte_array.h/cpp
+minecraft_object.h/cpp
+
+This part of the code is required to read and write in NBT format.  It also provides a rather smooth interface to the rest of the code to mess around with files.
+
+The real meat of the code is in thread.cpp and block_comp.cpp.
+
+thread.cpp Loads up the user's image files.  Creates a default level.dat file with basic user information.
+
+The image information is then passed to block_comp.  This is a threaded object.  block_comp does color comparision and examines each image in 3d space.  The resulting 3d rendered object is filled into a 3d containing cube.  In code, this is simply a 1D array of ints.
+
+The size of the array is dependant of the images:
+Front - Width x Height
+Side - Depth x Height
+Top - Depth x Width
+
+The array is of size, Width * Depth * Height with a mapping equation of:
+(x * Height + z * Width * Height + y)
+
+3D object is calculated and stored into my array, the program interates over the X,Z coordinates of the containing cube, converting from my world coordinate system to minecrafts coordinate system.
+
+My world system is 0,0,0 to Width, Height, Depth
+Minecraft's world system is 0,0,0 to 16,16,128.  Then each of those 16x16x128 blocks are stored on the filesystem with an offset position inside.  The offset * 16 + the individual blocks gives you the world coordinates system again.
+
+After each 16 by 16 by 128 chunk is converted to minecraft format, it is saved, and the program iterates to the next chunk.  You can get a huge performance boost if this last phase was threaded.
+
