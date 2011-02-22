@@ -2,6 +2,9 @@
 #define THREAD_H
 
 #include <QObject>
+#include <QRgb>
+
+#include "block_comp.h"
 
 class Thread : public QObject
 {

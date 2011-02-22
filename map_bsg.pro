@@ -14,10 +14,12 @@ HEADERS += file_parser.h \
            mc_variable.h \
            minecraft_byte_array.h \
            minecraft_object.h \
-           thread.h
+           thread.h \
+           block_comp.h
 SOURCES += file_parser.cpp \
            main.cpp \
            mc_variable.cpp \
            minecraft_byte_array.cpp \
            minecraft_object.cpp \
-           thread.cpp
+           thread.cpp \
+           block_comp.cpp

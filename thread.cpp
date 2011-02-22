@@ -9,11 +9,15 @@
 #include <qcoreapplication.h>
 
 #include "minecraft_object.h"
+#include <math.h>
 
 #include "thread.h"
 
-#define xyz( x, y, z ) (x + z * Width + y * Square)
+#define THREAD_COUNT 8
+
+#define xyz( x, y, z ) (x * Height + z * Square + y)
 #define mxyz( x, y, z ) (z * 128 + x * 2048 + y)
+#define dxyz( x, y, z ) (z * 64 + x * 1024 + y)
 #define rgb( r, g, b ) (0xFF000000 | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF))
 
 Thread::Thread( char* image, char* dir ) : Image_Filename( image ), Dir( dir )
@@ -27,11 +31,18 @@ void Thread::startThread()
 
 void Thread::thread()
 {
-  int x, y, z;
+  int x, y, z, yt;
+//  double dx, dy, dz;
   int px, pz;
-  int t1, t2;
-  QRgb t,s,f;
+  int t1, t2, t3;
+//  double dist;
+//  double min_dist;
+//  QRgb t,s,f;
   QString fx, fz, fux, fuz;
+//  int block;
+//  int data;
+  int i;
+  bool done;
 
     //Load up my image
   QImage front( "Front_50.png" );
@@ -42,32 +53,119 @@ void Thread::thread()
   Width = front.width();
   Height = side.height();
   Depth = top.width();
-  Square = Width * Depth;
-  Size = Square * Height;
+  Square = Width * Height;
+  Size = Square * Depth;
 
     //Alloc my world
   qDebug("Alloc World: %d\n", Size );
   Blocks = new unsigned char[ Size ];
+  Data = new unsigned char[ Size ];
 
     //Zero all the memory
   memset( Blocks, 0, Size );
+  memset( Data, 0, Size );
 
+  BlockComp** block_comp = new BlockComp*[THREAD_COUNT];
+  for ( i = 0; i < THREAD_COUNT; i++ )
+  {
+    block_comp[i] = new BlockComp(Blocks, Data, 
+                                  Width, Depth, Height, 
+                                  &front, &side, &top );
+    
+      //Reset my y to start
+    if ( i == 0 ) block_comp[i]->reset();
+    block_comp[i]->start();
+  }
+
+    //Wait until we're done
+  do {
+    QThread::yieldCurrentThread();
+
+      //Check for being done
+    for ( done = true, i = 0; done && i < THREAD_COUNT; i++ )
+      done = (done & block_comp[i]->isFinished());
+
+  } while ( !done );
+
+/*
     //Reading in Image
   qDebug("Reading in Image\n" );
   for ( y = 0; y < Height; y++ )
+  {
+    qDebug("Calc %d/%d\n", y, Height );
     for ( z = 0; z < Depth; z++ )
       for ( x = 0; x < Width; x++ )
       {
-        t = top.pixel( z, x );
-        s = side.pixel( z, y );
-        f = front.pixel( x, y );
+        t = (top.pixel( z, x )   | 0xFF000000);
+        s = (side.pixel( z, y )  | 0xFF000000);
+        f = (front.pixel( x, y ) | 0xFF000000);
 
-          //If this is inside each image, we have a winner!
-        if (t != rgb( 0xFF, 0x0, 0xFF ) &&
-            s != rgb( 0xFF, 0x0, 0xFF ) &&
-            f != rgb( 0xFF, 0x0, 0xFF ) )
-          Blocks[ xyz( x, y, z )] = 0x04;
+          //Try to calculate what color best fits the bsg
+        min_dist = 1;
+        block = data = 0;
+
+          //Get my xyz
+        calcPoint( dx, dy, dz, t, s, f );
+
+        //Figure out waht color is closets
+
+          //White space
+        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb( 255, 0, 255 )) ) )
+        {
+          min_dist = dist;
+          block = 0;
+          data = 0;
+        }
+
+          //Gray
+        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0xB0, 0xB0, 0xB0))))
+        {
+          min_dist = dist;
+          block = 0x23;
+          data = 0x01;
+        }
+          //Dark Gray
+        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0x44, 0x44, 0x44))))
+        {
+          min_dist = dist;
+          block = 0x23;
+          data = 0x02;
+        }
+          //Black
+        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0x00, 0x00, 0x00))))
+        {
+          min_dist = dist;
+          block = 0x23;
+          data = 0x03;
+        }
+          //Red
+        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0xCC, 0x00, 0x00))))
+        {
+          min_dist = dist;
+          block = 0x23;
+          data = 0x04;
+        }
+          //Orange
+        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0xFF, 0x7F, 0x00))))
+        {
+          min_dist = dist;
+          block = 0x23;
+          data = 0x05;
+        }
+          //Yellow
+        if ( min_dist > (dist = calcDist( dx, dy, dz, rgb(0xFF, 0xFF, 0x00))))
+        {
+          min_dist = dist;
+          block = 0x23;
+          data = 0x06;
+        }
+
+
+        Blocks[ xyz( x, y, z )] = block;
+        Data[ xyz( x, y, z )] = data;
       }
+  }
+*/
 
     //Create my level file
   qDebug("Building Level object\n" );
@@ -151,7 +249,7 @@ void Thread::thread()
       if ( px >= 0 )
       {
         fx = QString::number( px, 36 );
-        fux = QString::number( px & 0x1F, 36 );
+        fux = QString::number( px & 0x3F, 36 );
       }
       else
       {
@@ -161,7 +259,7 @@ void Thread::thread()
       if ( pz >= 0 )
       {
         fz = QString::number( pz, 36 );
-        fuz = QString::number( pz & 0x1F, 36 );
+        fuz = QString::number( pz & 0x3F, 36 );
       }
       else
       {
@@ -197,26 +295,27 @@ void Thread::thread()
         //Fill some lighting stuff
       bSkyLight.fill(0xff);
       bBlockLight.fill(0xff);
-      bData.fill(0xFF);
-      bHeightMap.fill(1);
+      bData.fill(0);
+      bHeightMap.fill( Height / 2 + 5 );
       bBlocks.fill(0);
 
         //Load my object with data
-      for ( y = 0; y < Height; y++ )
-        for ( z = 0; z < 16; z++ )
-          for ( x = 0; x < 16; x++ )
+      for ( z = 0; z < 16; z++ )
+        for ( x = 0; x < 16; x++ )
+          for ( y = 0; y < Height; y++ )
           {
               //get my t's
-            t1 = mxyz( x, (Height - y) + 5, z );
+            yt = (Height - y) + 5;
+            t1 = mxyz( x, yt, z );
             t2 = xyz( (x + px * 16), y, (z + pz * 16) );
+            t3 = dxyz( x, (yt / 2), z );
 
               //Store an image
             if ( px >= 0 && pz >= 0 && 
                   x + px * 16 < Width && z + pz * 16 < Depth && y < Height )
             {
               bBlocks[t1] = Blocks[t2];
-              if ( (int)bHeightMap[x + z * 16] < (127 - y) )
-                bHeightMap[x + z * 16] = (127 - y);
+              bData[t3] = (bData[t3] | ((Data[t2] & 0x0F) << ((yt & 1) * 4)));
             }
           }
 
