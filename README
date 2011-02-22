@@ -1,4 +1,4 @@
-Hey there.
+Hey there.  This code was made on Ubuntu, it will only work in linux.  Some simple editing will get it working in Mac and Windows.  The change needs to be applied to the popen functions.  Mac will probably deal with those, windows probably wont.
 
 This program takes 3, 2D images that are shots of the same object on each axis, XYZ and maps them into a 3D object in minecraft.
 
@@ -10,7 +10,7 @@ qmake
 make
 ./map_bsg OUTPUT_FOLDER
 
-Once the output folder is created, make a symbolic linc to that folder so minecraft can see it:
+Once the output folder is created, make a symbolic link to that folder so minecraft can see it:
 
 ln -s /PATH/map_bsg/OUTPUT_FOLDER ~/.minecraft/save/World5
 
@@ -31,7 +31,7 @@ file_parser.h/cpp
 minecraft_byte_array.h/cpp
 minecraft_object.h/cpp
 
-This part of the code is required to read and write in NBT format.  It also provides a rather smooth interface to the rest of the code to mess around with files.
+This part of the code is required to read and write in NBT format.  It also provides a rather smooth interface to the rest of the code to mess around with files.  Nothing is very exciting in there though.
 
 The real meat of the code is in thread.cpp and block_comp.cpp.
 
@@ -54,3 +54,4 @@ Minecraft's world system is 0,0,0 to 16,16,128.  Then each of those 16x16x128 bl
 
 After each 16 by 16 by 128 chunk is converted to minecraft format, it is saved, and the program iterates to the next chunk.  You can get a huge performance boost if this last phase was threaded.
 
+Thats it, have fun!
