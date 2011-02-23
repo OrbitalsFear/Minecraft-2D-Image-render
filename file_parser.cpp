@@ -14,7 +14,7 @@ void FileParser::loadUnnamed( MinecraftByteArray& data, McVariable& obj_list,
   int tmp_count;
 
     //Set my size
-  list.reserve( count );
+//  list.reserve( count );
 
     //Fill up my list
   switch ( type )
